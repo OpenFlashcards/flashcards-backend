@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres-flashcards-dev
+    environment:
+      POSTGRES_DB: flashcards
+      POSTGRES_USER: flashcards
+      POSTGRES_PASSWORD: flashcards
+    ports:
+      - '5432:5432'
+    volumes:
+      - flashcards_postgres_dev:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  flashcards_postgres_dev:
