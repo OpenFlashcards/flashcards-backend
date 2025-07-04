@@ -41,7 +41,7 @@ export class AuthController {
     description: 'User login credentials',
   })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'Successfully authenticated',
     type: AuthResponseDto,
   })
@@ -110,7 +110,7 @@ export class AuthController {
       'Verify if the provided JWT token is valid and return user information',
   })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description: 'Token is valid',
     schema: {
       type: 'object',
