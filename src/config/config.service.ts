@@ -18,6 +18,7 @@ export interface EnvironmentConfig {
   JWT_SECRET?: string;
   JWT_EXPIRES_IN?: string;
   PORT?: string;
+  PASSWORD_SALT?: string;
 
   // CORS Configuration
   CORS_ORIGIN?: string;
@@ -46,6 +47,7 @@ export class ConfigService {
       'JWT_SECRET',
       'JWT_EXPIRES_IN',
       'PORT',
+      'PASSWORD_SALT',
       'CORS_ORIGIN',
       'CORS_METHODS',
       'CORS_ALLOWED_HEADERS',
@@ -103,6 +105,9 @@ export class ConfigService {
       JWT_EXPIRES_IN:
         this.nestConfigService.get<string>('JWT_EXPIRES_IN') || '7d',
       PORT: this.nestConfigService.get<string>('PORT') || '3000',
+      PASSWORD_SALT:
+        this.nestConfigService.get<string>('PASSWORD_SALT') ||
+        'default-salt-change-in-production',
       CORS_ORIGIN: this.nestConfigService.get<string>('CORS_ORIGIN') || '*',
       CORS_METHODS:
         this.nestConfigService.get<string>('CORS_METHODS') ||
@@ -137,6 +142,11 @@ export class ConfigService {
 
   get jwtExpiresIn(): string {
     return this.config.JWT_EXPIRES_IN || '7d';
+  }
+
+  get passwordSalt(): string {
+    // WARNING: Never expose this value through public APIs
+    return this.config.PASSWORD_SALT || 'default-salt-change-in-production';
   }
 
   get corsOrigin(): string {
