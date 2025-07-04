@@ -12,3 +12,48 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String?
+  name      String?
+  appleId   String?  @unique
+  googleId  String?  @unique
+  provider  String   @default("email")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userDecks UserDeck[]
+
+  @@map("users")
+}
+
+model Deck {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parentDeckId Int?
+  parentDeck   Deck?      @relation("DeckHierarchy", fields: [parentDeckId], references: [id])
+  subDecks     Deck[]     @relation("DeckHierarchy")
+  userDecks    UserDeck[]
+
+  @@map("decks")
+}
+
+model UserDeck {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  deckId Int
+  role   String @default("member") // "owner", "admin", "member"
+
+  user User @relation(fields: [userId], references: [id])
+  deck Deck @relation(fields: [deckId], references: [id])
+
+  @@unique([userId, deckId])
+  @@map("user_decks")
+}
