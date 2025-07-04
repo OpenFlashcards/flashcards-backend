@@ -18,6 +18,7 @@ export interface EnvironmentConfig {
   JWT_SECRET?: string;
   JWT_EXPIRES_IN?: string;
   PORT?: string;
+  PASSWORD_SALT?: string;
 
   // CORS Configuration
   CORS_ORIGIN?: string;
@@ -42,10 +43,15 @@ export class ConfigService {
   private validateAndLoadConfig(): EnvironmentConfig {
     const requiredEnvVars = ['DATABASE_URL'];
 
+    // JWT_SECRET is required in production
+    if (this.nestConfigService.get<string>('NODE_ENV') === 'production') {
+      requiredEnvVars.push('JWT_SECRET');
+    }
+
     const optionalEnvVars = [
-      'JWT_SECRET',
       'JWT_EXPIRES_IN',
       'PORT',
+      'PASSWORD_SALT',
       'CORS_ORIGIN',
       'CORS_METHODS',
       'CORS_ALLOWED_HEADERS',
@@ -54,6 +60,11 @@ export class ConfigService {
       'CORS_MAX_AGE',
       'LOG_LEVEL',
     ];
+
+    // JWT_SECRET is optional in non-production environments
+    if (this.nestConfigService.get<string>('NODE_ENV') !== 'production') {
+      optionalEnvVars.unshift('JWT_SECRET');
+    }
 
     const missingRequired: string[] = [];
     const missingOptional: string[] = [];
@@ -103,6 +114,9 @@ export class ConfigService {
       JWT_EXPIRES_IN:
         this.nestConfigService.get<string>('JWT_EXPIRES_IN') || '7d',
       PORT: this.nestConfigService.get<string>('PORT') || '3000',
+      PASSWORD_SALT:
+        this.nestConfigService.get<string>('PASSWORD_SALT') ||
+        'default-salt-change-in-production',
       CORS_ORIGIN: this.nestConfigService.get<string>('CORS_ORIGIN') || '*',
       CORS_METHODS:
         this.nestConfigService.get<string>('CORS_METHODS') ||
@@ -126,9 +140,23 @@ export class ConfigService {
     return this.config.DATABASE_URL;
   }
 
-  get jwtSecret(): string | undefined {
+  get jwtSecret(): string {
     // WARNING: Never expose this value through public APIs
-    return this.config.JWT_SECRET;
+    const secret = this.config.JWT_SECRET;
+
+    if (!secret) {
+      if (this.isProduction) {
+        throw new Error(
+          'JWT_SECRET environment variable is required in production',
+        );
+      }
+
+      // Return default secret for development/test environments
+      this.logger.warn('JWT_SECRET not set, using default development secret');
+      return 'default-jwt-secret-change-in-production';
+    }
+
+    return secret;
   }
 
   get port(): number {
@@ -137,6 +165,11 @@ export class ConfigService {
 
   get jwtExpiresIn(): string {
     return this.config.JWT_EXPIRES_IN || '7d';
+  }
+
+  get passwordSalt(): string {
+    // WARNING: Never expose this value through public APIs
+    return this.config.PASSWORD_SALT || 'default-salt-change-in-production';
   }
 
   get corsOrigin(): string {

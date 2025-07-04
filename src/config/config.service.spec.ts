@@ -46,8 +46,25 @@ describe('ConfigService', () => {
     );
   });
 
-  it('should return correct JWT secret', () => {
-    expect(service.jwtSecret).toBeUndefined(); // No JWT_SECRET set in test
+  it('should return default JWT secret when not set in development', () => {
+    expect(service.jwtSecret).toBe('default-jwt-secret-change-in-production');
+  });
+
+  it('should return custom JWT secret when set', async () => {
+    process.env.JWT_SECRET = 'custom-jwt-secret';
+
+    // Recreate service to pick up new env var
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        NestConfigModule.forRoot({
+          isGlobal: true,
+        }),
+      ],
+      providers: [ConfigService],
+    }).compile();
+
+    const newService = module.get<ConfigService>(ConfigService);
+    expect(newService.jwtSecret).toBe('custom-jwt-secret');
   });
 
   it('should return correct port as number', () => {
