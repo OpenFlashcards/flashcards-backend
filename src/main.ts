@@ -31,7 +31,7 @@ async function bootstrap() {
         },
         'JWT-auth',
       )
-      .addSecurityRequirements('bearer')
+      .addSecurityRequirements('JWT-auth')
       .build();
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, documentFactory);

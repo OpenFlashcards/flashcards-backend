@@ -6,7 +6,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 import {
   ConflictErrorResponseDto,
   ValidationErrorResponseDto,
-} from './dto/error-response.dto';
+} from '../common';
 import { Public } from '../auth/decorators';
 
 @ApiTags('Users')
