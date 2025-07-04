@@ -153,6 +153,38 @@ export class UserService {
   }
 
   /**
+   * Find user by email with password (for authentication)
+   */
+  async findByEmail(email: string) {
+    try {
+      this.logger.log(`Finding user by email for authentication: ${email}`);
+
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          password: true,
+          appleId: true,
+          googleId: true,
+          provider: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return user;
+    } catch (error) {
+      this.logger.error(
+        `Failed to find user by email for auth: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Verify a plain password against a stored hash
    */
   verifyPassword(plainPassword: string, hashedPassword: string): boolean {

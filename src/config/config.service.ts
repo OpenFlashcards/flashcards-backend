@@ -43,8 +43,12 @@ export class ConfigService {
   private validateAndLoadConfig(): EnvironmentConfig {
     const requiredEnvVars = ['DATABASE_URL'];
 
+    // JWT_SECRET is required in production
+    if (this.nestConfigService.get<string>('NODE_ENV') === 'production') {
+      requiredEnvVars.push('JWT_SECRET');
+    }
+
     const optionalEnvVars = [
-      'JWT_SECRET',
       'JWT_EXPIRES_IN',
       'PORT',
       'PASSWORD_SALT',
@@ -56,6 +60,11 @@ export class ConfigService {
       'CORS_MAX_AGE',
       'LOG_LEVEL',
     ];
+
+    // JWT_SECRET is optional in non-production environments
+    if (this.nestConfigService.get<string>('NODE_ENV') !== 'production') {
+      optionalEnvVars.unshift('JWT_SECRET');
+    }
 
     const missingRequired: string[] = [];
     const missingOptional: string[] = [];
@@ -131,9 +140,23 @@ export class ConfigService {
     return this.config.DATABASE_URL;
   }
 
-  get jwtSecret(): string | undefined {
+  get jwtSecret(): string {
     // WARNING: Never expose this value through public APIs
-    return this.config.JWT_SECRET;
+    const secret = this.config.JWT_SECRET;
+
+    if (!secret) {
+      if (this.isProduction) {
+        throw new Error(
+          'JWT_SECRET environment variable is required in production',
+        );
+      }
+
+      // Return default secret for development/test environments
+      this.logger.warn('JWT_SECRET not set, using default development secret');
+      return 'default-jwt-secret-change-in-production';
+    }
+
+    return secret;
   }
 
   get port(): number {

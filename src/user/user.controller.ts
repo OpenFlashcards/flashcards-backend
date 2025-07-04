@@ -7,12 +7,14 @@ import {
   ConflictErrorResponseDto,
   ValidationErrorResponseDto,
 } from './dto/error-response.dto';
+import { Public } from '../auth/decorators';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Public()
   @Post()
   @ApiOperation({
     summary: 'Create a new user',
