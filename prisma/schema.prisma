@@ -41,6 +41,7 @@ model Deck {
   parentDeck   Deck?      @relation("DeckHierarchy", fields: [parentDeckId], references: [id], onDelete: Cascade)
   subDecks     Deck[]     @relation("DeckHierarchy")
   userDecks    UserDeck[]
+  cards        Card[]
 
   @@map("decks")
 }
@@ -56,4 +57,17 @@ model UserDeck {
 
   @@unique([userId, deckId])
   @@map("user_decks")
+}
+
+model Card {
+  id        Int      @id @default(autoincrement())
+  question  String   @db.Text
+  answer    String   @db.Text
+  deckId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@map("cards")
 }
