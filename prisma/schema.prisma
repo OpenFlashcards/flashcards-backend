@@ -38,7 +38,7 @@ model Deck {
   updatedAt   DateTime @updatedAt
 
   parentDeckId Int?
-  parentDeck   Deck?      @relation("DeckHierarchy", fields: [parentDeckId], references: [id])
+  parentDeck   Deck?      @relation("DeckHierarchy", fields: [parentDeckId], references: [id], onDelete: Cascade)
   subDecks     Deck[]     @relation("DeckHierarchy")
   userDecks    UserDeck[]
 
@@ -52,7 +52,7 @@ model UserDeck {
   role   String @default("member") // "admin", "member"
 
   user User @relation(fields: [userId], references: [id])
-  deck Deck @relation(fields: [deckId], references: [id])
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@unique([userId, deckId])
   @@map("user_decks")

@@ -323,4 +323,43 @@ export class DeckController {
   ): Promise<LeaveDeckResponseDto> {
     return this.deckService.leaveDeck(user.id, deckId);
   }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a deck',
+    description:
+      'Deletes a deck and all its child decks recursively. Requires admin permissions on the deck. This action cannot be undone.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique identifier of the deck to delete',
+    type: 'integer',
+    example: 1,
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Successfully deleted deck and all child decks',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Deck not found or access denied',
+    type: NotFoundErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Authentication required',
+    type: UnauthorizedErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Insufficient permissions to delete deck',
+    type: ForbiddenErrorResponseDto,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteDeck(
+    @CurrentUser() user: any,
+    @Param('id', ParseIntPipe) deckId: number,
+  ): Promise<void> {
+    return this.deckService.deleteDeck(user.id, deckId);
+  }
 }

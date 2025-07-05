@@ -389,16 +389,31 @@ export class DeckService {
           (ud) => ud.userId !== userId,
         );
 
-        // If no users remain, delete the deck
+        // If no users remain, delete the deck and all its children
         if (remainingUsers.length === 0) {
+          // Get all child deck IDs recursively before deletion
+          const allChildDeckIds = await this.getAllChildDeckIds(prisma, deckId);
+
+          // Delete all child decks first (from deepest to shallowest)
+          for (const childDeckId of allChildDeckIds.reverse()) {
+            await prisma.deck.delete({
+              where: { id: childDeckId },
+            });
+            this.logger.log(`Deleted orphaned child deck ID: ${childDeckId}`);
+          }
+
+          // Finally delete the parent deck
           await prisma.deck.delete({
             where: { id: deckId },
           });
 
-          this.logger.log(`Deck ID: ${deckId} deleted as no users remain`);
+          this.logger.log(
+            `Deck ID: ${deckId} and all child decks deleted as no users remain`,
+          );
           return {
             deckDeleted: true,
-            message: 'Left deck and deck was deleted as no users remained',
+            message:
+              'Left deck and deck (including all child decks) was deleted as no users remained',
           };
         }
 
@@ -443,6 +458,83 @@ export class DeckService {
       this.logger.error(`Failed to leave deck: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Delete a deck and all its child decks recursively
+   */
+  async deleteDeck(userId: number, deckId: number): Promise<void> {
+    this.logger.log(`Deleting deck ID: ${deckId} by user ID: ${userId}`);
+
+    // Check if user has admin permissions
+    await this.validateUserDeckAccess(userId, deckId, ['admin']);
+
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        // Get all child deck IDs recursively
+        const allChildDeckIds = await this.getAllChildDeckIds(prisma, deckId);
+
+        // Delete all child decks first (from deepest to shallowest)
+        // The CASCADE constraint will handle UserDeck deletions automatically
+        for (const childDeckId of allChildDeckIds.reverse()) {
+          await prisma.deck.delete({
+            where: { id: childDeckId },
+          });
+          this.logger.log(`Deleted child deck ID: ${childDeckId}`);
+        }
+
+        // Finally delete the parent deck
+        await prisma.deck.delete({
+          where: { id: deckId },
+        });
+
+        this.logger.log(
+          `Successfully deleted deck ID: ${deckId} and all its child decks`,
+        );
+      });
+    } catch (error) {
+      this.logger.error(`Failed to delete deck: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Recursively get all child deck IDs for a given deck
+   */
+  private async getAllChildDeckIds(
+    prisma: any,
+    deckId: number,
+    visited: Set<number> = new Set(),
+  ): Promise<number[]> {
+    // Prevent infinite loops in case of circular references
+    if (visited.has(deckId)) {
+      return [];
+    }
+
+    visited.add(deckId);
+
+    // Get direct children
+    const directChildren = await prisma.deck.findMany({
+      where: { parentDeckId: deckId },
+      select: { id: true },
+    });
+
+    const allChildIds: number[] = [];
+
+    // Add direct children IDs
+    for (const child of directChildren) {
+      allChildIds.push(child.id);
+
+      // Recursively get grandchildren
+      const grandChildren = await this.getAllChildDeckIds(
+        prisma,
+        child.id,
+        visited,
+      );
+      allChildIds.push(...grandChildren);
+    }
+
+    return allChildIds;
   }
 
   /**

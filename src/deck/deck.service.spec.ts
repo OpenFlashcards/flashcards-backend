@@ -518,6 +518,7 @@ describe('DeckService', () => {
             delete: jest.fn(),
           },
           deck: {
+            findMany: jest.fn().mockResolvedValue([]), // No child decks
             delete: jest.fn(),
           },
         };
@@ -528,7 +529,7 @@ describe('DeckService', () => {
 
       expect(result.deckDeleted).toBe(true);
       expect(result.message).toBe(
-        'Left deck and deck was deleted as no users remained',
+        'Left deck and deck (including all child decks) was deleted as no users remained',
       );
     });
 
@@ -540,6 +541,74 @@ describe('DeckService', () => {
 
       await expect(service.leaveDeck(userId, deckId)).rejects.toThrow(
         NotFoundException,
+      );
+    });
+  });
+
+  describe('deleteDeck', () => {
+    it('should delete a deck with child decks successfully', async () => {
+      const userId = 1;
+      const deckId = 1;
+      const childDeckId1 = 2;
+      const childDeckId2 = 3;
+      const grandChildDeckId = 4;
+
+      // Mock validateUserDeckAccess to pass
+      mockPrismaService.userDeck.findUnique.mockResolvedValue({
+        id: 1,
+        userId,
+        deckId,
+        role: 'admin',
+      });
+
+      // Mock transaction
+      mockPrismaService.$transaction.mockImplementation(async (callback) => {
+        const mockTransactionPrisma = {
+          deck: {
+            findMany: jest
+              .fn()
+              .mockResolvedValueOnce([
+                { id: childDeckId1 },
+                { id: childDeckId2 },
+              ]) // Direct children of deck 1
+              .mockResolvedValueOnce([{ id: grandChildDeckId }]) // Children of deck 2
+              .mockResolvedValueOnce([]) // Children of deck 3 (none)
+              .mockResolvedValueOnce([]), // Children of deck 4 (none)
+            delete: jest.fn(),
+          },
+        };
+        return callback(mockTransactionPrisma);
+      });
+
+      await service.deleteDeck(userId, deckId);
+
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when user has no access to deck', async () => {
+      const userId = 1;
+      const deckId = 1;
+
+      mockPrismaService.userDeck.findUnique.mockResolvedValue(null);
+
+      await expect(service.deleteDeck(userId, deckId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException when user is not admin', async () => {
+      const userId = 1;
+      const deckId = 1;
+
+      mockPrismaService.userDeck.findUnique.mockResolvedValue({
+        id: 1,
+        userId,
+        deckId,
+        role: 'member',
+      });
+
+      await expect(service.deleteDeck(userId, deckId)).rejects.toThrow(
+        ForbiddenException,
       );
     });
   });

@@ -13,6 +13,7 @@ describe('DeckController', () => {
     getDeckById: jest.fn(),
     removeUserFromDeck: jest.fn(),
     leaveDeck: jest.fn(),
+    deleteDeck: jest.fn(),
   };
 
   const mockUser = {
@@ -176,6 +177,20 @@ describe('DeckController', () => {
 
       expect(result).toEqual(mockResult);
       expect(mockDeckService.leaveDeck).toHaveBeenCalledWith(
+        mockUser.id,
+        deckId,
+      );
+    });
+  });
+
+  describe('deleteDeck', () => {
+    it('should delete a deck successfully', async () => {
+      const deckId = 1;
+      mockDeckService.deleteDeck = jest.fn().mockResolvedValue(undefined);
+
+      await controller.deleteDeck(mockUser, deckId);
+
+      expect(mockDeckService.deleteDeck).toHaveBeenCalledWith(
         mockUser.id,
         deckId,
       );
