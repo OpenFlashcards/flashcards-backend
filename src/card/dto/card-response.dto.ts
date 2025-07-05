@@ -50,4 +50,12 @@ export class CardResponseDto {
     example: '2024-07-05T10:30:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Additional notes or explanation for the card',
+    example:
+      'Paris is the largest city in France and has been the capital since 987 AD.',
+    nullable: true,
+  })
+  notes: string | null;
 }

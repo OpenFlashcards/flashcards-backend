@@ -247,4 +247,177 @@ describe('CardController (e2e)', () => {
         .expect(404);
     });
   });
+
+  describe('PATCH /cards/:cardId', () => {
+    beforeEach(async () => {
+      const response = await request(app.getHttpServer())
+        .post(`/cards/deck/${deckId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          question: 'What is the capital of France?',
+          answer: 'Paris',
+          notes: 'Original notes',
+        });
+
+      cardId = response.body.id;
+    });
+
+    it('should update question only', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          question: 'What is the capital city of France?',
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: cardId,
+        question: 'What is the capital city of France?',
+        answer: 'Paris',
+        notes: 'Original notes',
+        deckId,
+        createdById: userId,
+      });
+    });
+
+    it('should update answer only', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          answer: 'Paris, the City of Light',
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: cardId,
+        question: 'What is the capital of France?',
+        answer: 'Paris, the City of Light',
+        notes: 'Original notes',
+        deckId,
+        createdById: userId,
+      });
+    });
+
+    it('should update notes only', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          notes: 'Updated notes with additional information',
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: cardId,
+        question: 'What is the capital of France?',
+        answer: 'Paris',
+        notes: 'Updated notes with additional information',
+        deckId,
+        createdById: userId,
+      });
+    });
+
+    it('should update all fields', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          question: 'What is the capital and largest city of France?',
+          answer: 'Paris is the capital and largest city of France',
+          notes:
+            'Paris is located in northern central France and is the political, economic, and cultural center of the country.',
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: cardId,
+        question: 'What is the capital and largest city of France?',
+        answer: 'Paris is the capital and largest city of France',
+        notes:
+          'Paris is located in northern central France and is the political, economic, and cultural center of the country.',
+        deckId,
+        createdById: userId,
+      });
+    });
+
+    it('should clear notes field when set to empty string', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          notes: '',
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        id: cardId,
+        question: 'What is the capital of France?',
+        answer: 'Paris',
+        notes: '',
+        deckId,
+        createdById: userId,
+      });
+    });
+
+    it('should return 400 for empty body', async () => {
+      await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({})
+        .expect(400);
+    });
+
+    it('should return 400 for invalid data', async () => {
+      await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          question: '', // Empty question
+        })
+        .expect(400);
+    });
+
+    it('should return 404 for non-existent card', async () => {
+      await request(app.getHttpServer())
+        .patch('/cards/999999')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          question: 'Updated question',
+        })
+        .expect(404);
+    });
+
+    it('should return 403 for unauthorized access', async () => {
+      // Create another user
+      const anotherUserResponse = await request(app.getHttpServer())
+        .post('/users')
+        .send({
+          email: 'another@example.com',
+          password: 'password123',
+          name: 'Another User',
+        })
+        .expect(201);
+
+      // Login as another user
+      const anotherLoginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'another@example.com',
+          password: 'password123',
+        })
+        .expect(200);
+
+      const anotherToken = anotherLoginResponse.body.accessToken;
+
+      await request(app.getHttpServer())
+        .patch(`/cards/${cardId}`)
+        .set('Authorization', `Bearer ${anotherToken}`)
+        .send({
+          question: 'Unauthorized update',
+        })
+        .expect(403);
+    });
+  });
 });

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto, CardResponseDto } from './dto';
+import { UpdateCardDto } from './dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -35,6 +36,7 @@ export class CardService {
         data: {
           question: createCardDto.question,
           answer: createCardDto.answer,
+          notes: createCardDto.notes,
           deckId,
           createdById: userId,
         },
@@ -119,6 +121,124 @@ export class CardService {
     await this.validateUserDeckAccess(card.deckId, userId);
 
     return this.mapToCardResponse(card);
+  }
+
+  /**
+   * Update a specific card
+   */
+  async updateCard(
+    cardId: number,
+    updateCardDto: UpdateCardDto,
+    userId: number,
+  ): Promise<CardResponseDto> {
+    this.logger.log(`Updating card ID: ${cardId} by user ID: ${userId}`);
+
+    // First, get the card to verify ownership and deck access
+    const existingCard = await this.prisma.card.findUnique({
+      where: { id: cardId },
+      include: {
+        deck: true,
+      },
+    });
+
+    if (!existingCard) {
+      this.logger.warn(`Card with ID ${cardId} not found`);
+      throw new NotFoundException(`Card with ID ${cardId} not found`);
+    }
+
+    // Check if user has access to the deck
+    await this.validateUserDeckAccess(existingCard.deckId, userId);
+
+    // Check if user is the creator or has admin access to the deck
+    const userDeck = await this.prisma.userDeck.findFirst({
+      where: {
+        userId,
+        deckId: existingCard.deckId,
+      },
+    });
+
+    const canUpdate =
+      existingCard.createdById === userId || userDeck?.role === 'admin';
+
+    if (!canUpdate) {
+      this.logger.warn(
+        `User ${userId} does not have permission to update card ${cardId}`,
+      );
+      throw new ForbiddenException(
+        'You can only update cards you created or if you are an admin of the deck',
+      );
+    }
+
+    // If moving to a different deck, check access to the target deck
+    if (updateCardDto.deckId && updateCardDto.deckId !== existingCard.deckId) {
+      this.logger.log(
+        `Moving card ${cardId} from deck ${existingCard.deckId} to deck ${updateCardDto.deckId}`,
+      );
+
+      // Validate access to the target deck
+      await this.validateUserDeckAccess(updateCardDto.deckId, userId);
+
+      // Check if user has permission to add cards to the target deck
+      const targetUserDeck = await this.prisma.userDeck.findFirst({
+        where: {
+          userId,
+          deckId: updateCardDto.deckId,
+        },
+      });
+
+      // Users need at least member access to add cards to a deck
+      if (!targetUserDeck) {
+        this.logger.warn(
+          `User ${userId} does not have access to target deck ${updateCardDto.deckId}`,
+        );
+        throw new ForbiddenException(
+          'You do not have access to the target deck',
+        );
+      }
+    }
+
+    // Prepare update data - only include fields that are provided
+    const updateData: any = {};
+    if (updateCardDto.question !== undefined) {
+      updateData.question = updateCardDto.question;
+    }
+    if (updateCardDto.answer !== undefined) {
+      updateData.answer = updateCardDto.answer;
+    }
+    if (updateCardDto.notes !== undefined) {
+      updateData.notes = updateCardDto.notes;
+    }
+    if (updateCardDto.deckId !== undefined) {
+      updateData.deckId = updateCardDto.deckId;
+    }
+
+    // Check if there's anything to update
+    if (Object.keys(updateData).length === 0) {
+      this.logger.warn(`No valid fields provided for updating card ${cardId}`);
+      throw new BadRequestException('No valid fields provided for update');
+    }
+
+    try {
+      const updatedCard = await this.prisma.card.update({
+        where: { id: cardId },
+        data: updateData,
+        include: {
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      this.logger.log(`Successfully updated card with ID: ${cardId}`);
+
+      return this.mapToCardResponse(updatedCard);
+    } catch (error) {
+      this.logger.error(`Failed to update card: ${error.message}`);
+      throw new BadRequestException('Failed to update card');
+    }
   }
 
   /**
@@ -208,6 +328,7 @@ export class CardService {
       id: card.id,
       question: card.question,
       answer: card.answer,
+      notes: card.notes || null,
       deckId: card.deckId,
       createdById: card.createdById,
       createdByName: card.createdBy?.name || null,

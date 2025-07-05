@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -20,6 +21,7 @@ import {
 import { CurrentUser } from '../auth/decorators';
 import { CardService } from './card.service';
 import { CreateCardDto, CardResponseDto, ErrorResponseDto } from './dto';
+import { UpdateCardDto } from './dto';
 import {
   NotFoundErrorResponseDto,
   ValidationErrorResponseDto,
@@ -159,6 +161,92 @@ export class CardController {
     @CurrentUser() user: any,
   ): Promise<CardResponseDto> {
     return this.cardService.getCardById(cardId, user.id);
+  }
+
+  @Patch(':cardId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update a specific card',
+    description:
+      'Updates a specific flashcard by its ID. Only the creator of the card or deck admins can update cards. Fields that are not provided will remain unchanged. You can also move the card to a different deck by providing a deckId - you must have access to the target deck.',
+  })
+  @ApiParam({
+    name: 'cardId',
+    description: 'The ID of the card to update',
+    type: 'integer',
+    example: 1,
+  })
+  @ApiBody({
+    type: UpdateCardDto,
+    description: 'Card data to update (only provide fields you want to change)',
+    examples: {
+      'Update question only': {
+        value: {
+          question: 'What is the capital city of France?',
+        },
+      },
+      'Update answer and notes': {
+        value: {
+          answer: 'Paris, the City of Light',
+          notes:
+            'Paris is known for its cultural heritage and iconic landmarks.',
+        },
+      },
+      'Update all fields': {
+        value: {
+          question: 'What is the capital and largest city of France?',
+          answer: 'Paris',
+          notes:
+            'Paris is located in northern central France and is the political, economic, and cultural center of the country.',
+        },
+      },
+      'Move card to different deck': {
+        value: {
+          deckId: 2,
+        },
+      },
+      'Update and move card': {
+        value: {
+          question: 'What is the capital of France?',
+          answer: 'Paris',
+          deckId: 3,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Card successfully updated',
+    type: CardResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description:
+      'Invalid input data, no fields to update, or card update failed',
+    type: ValidationErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'User not authenticated',
+    type: UnauthorizedErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description:
+      'User does not have permission to update this card or access to the target deck',
+    type: ForbiddenErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Card not found or target deck not found',
+    type: NotFoundErrorResponseDto,
+  })
+  async updateCard(
+    @Param('cardId', ParseIntPipe) cardId: number,
+    @Body() updateCardDto: UpdateCardDto,
+    @CurrentUser() user: any,
+  ): Promise<CardResponseDto> {
+    return this.cardService.updateCard(cardId, updateCardDto, user.id);
   }
 
   @Delete(':cardId')
