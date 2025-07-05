@@ -3,6 +3,8 @@ import { Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { ConfigService } from './config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -34,7 +36,15 @@ async function bootstrap() {
       .addSecurityRequirements('JWT-auth')
       .build();
     const documentFactory = () => SwaggerModule.createDocument(app, config);
+    const document = documentFactory();
     SwaggerModule.setup('docs', app, documentFactory);
+
+    // Export swagger.json file (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+      const outputPath = join(process.cwd(), 'swagger.json');
+      writeFileSync(outputPath, JSON.stringify(document, null, 2));
+      logger.log(`Swagger JSON exported to: ${outputPath}`);
+    }
 
     await app.listen(port);
 

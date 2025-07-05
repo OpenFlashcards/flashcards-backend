@@ -1,0 +1,1929 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "AppController_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/users": {
+      "post": {
+        "description": "Creates a new user account. Requires either email/password or external provider authentication.",
+        "operationId": "UserController_createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "User creation data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              },
+              "examples": {
+                "emailUser": {
+                  "summary": "Email/Password User",
+                  "description": "Create user with email and password",
+                  "value": {
+                    "email": "user@example.com",
+                    "password": "securePassword123",
+                    "name": "John Doe",
+                    "provider": "email"
+                  }
+                },
+                "googleUser": {
+                  "summary": "Google User",
+                  "description": "Create user with Google authentication",
+                  "value": {
+                    "email": "user@gmail.com",
+                    "googleId": "google_user_id_123",
+                    "name": "Jane Smith",
+                    "provider": "google"
+                  }
+                },
+                "appleUser": {
+                  "summary": "Apple User",
+                  "description": "Create user with Apple authentication",
+                  "value": {
+                    "email": "user@icloud.com",
+                    "appleId": "apple_user_id_123",
+                    "name": "Bob Johnson",
+                    "provider": "apple"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User with email/appleId/googleId already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "description": "Authenticate user with email and password and return JWT token",
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "User login credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "User login",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "description": "Get the profile information of the currently authenticated user",
+        "operationId": "AuthController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "User ID",
+                      "example": "clm1234567890"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "User email address",
+                      "example": "user@example.com"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "User full name",
+                      "example": "John Doe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get user profile",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/verify": {
+      "post": {
+        "description": "Verify if the provided JWT token is valid and return user information",
+        "operationId": "AuthController_verifyToken",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Token is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean",
+                      "description": "Token validity status",
+                      "example": true
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "User ID",
+                          "example": "clm1234567890"
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "User email",
+                          "example": "user@example.com"
+                        }
+                      }
+                    },
+                    "expiresAt": {
+                      "type": "number",
+                      "description": "Token expiration timestamp",
+                      "example": 1720192200
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Verify JWT token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/decks": {
+      "get": {
+        "description": "Retrieves all decks that the authenticated user has access to, including their role in each deck and associated users.",
+        "operationId": "DeckController_getUserDecks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user decks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeckResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get all decks for the current user",
+        "tags": [
+          "Decks"
+        ]
+      },
+      "post": {
+        "description": "Creates a new deck with the authenticated user as the admin. Optionally can be created as a subdeck of an existing deck.",
+        "operationId": "DeckController_createDeck",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Deck creation data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeckDto"
+              },
+              "examples": {
+                "basicDeck": {
+                  "summary": "Basic Deck",
+                  "description": "Create a simple deck",
+                  "value": {
+                    "name": "Spanish Vocabulary",
+                    "description": "A comprehensive deck for learning basic Spanish vocabulary",
+                    "isPublic": false
+                  }
+                },
+                "subdeck": {
+                  "summary": "Subdeck",
+                  "description": "Create a subdeck under an existing deck",
+                  "value": {
+                    "name": "Spanish Verbs",
+                    "description": "Spanish verb conjugations",
+                    "isPublic": false,
+                    "parentDeckId": 1
+                  }
+                },
+                "publicDeck": {
+                  "summary": "Public Deck",
+                  "description": "Create a public deck visible to all users",
+                  "value": {
+                    "name": "Common English Phrases",
+                    "description": "Useful English phrases for daily conversation",
+                    "isPublic": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeckResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for parent deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Deck with this name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Create a new deck",
+        "tags": [
+          "Decks"
+        ]
+      }
+    },
+    "/decks/{id}": {
+      "get": {
+        "description": "Retrieves a specific deck by its ID. The user must have access to the deck.",
+        "operationId": "DeckController_getDeckById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the deck",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeckResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found or access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get a specific deck by ID",
+        "tags": [
+          "Decks"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a deck and all its child decks recursively. Requires admin permissions on the deck. This action cannot be undone.",
+        "operationId": "DeckController_deleteDeck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the deck to delete",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted deck and all child decks"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions to delete deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found or access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Delete a deck",
+        "tags": [
+          "Decks"
+        ]
+      }
+    },
+    "/decks/{id}/users": {
+      "post": {
+        "description": "Adds an existing user to a deck with a specified role. Requires admin permissions on the deck.",
+        "operationId": "DeckController_addUserToDeck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the deck",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "User addition data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserToDeckDto"
+              },
+              "examples": {
+                "addMember": {
+                  "summary": "Add Member",
+                  "description": "Add a user as a member",
+                  "value": {
+                    "email": "newuser@example.com",
+                    "role": "member"
+                  }
+                },
+                "addAdmin": {
+                  "summary": "Add Admin",
+                  "description": "Add a user as an admin",
+                  "value": {
+                    "email": "admin@example.com",
+                    "role": "admin"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successfully added user to deck"
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions to add users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck or user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User is already a member of this deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Add a user to a deck",
+        "tags": [
+          "Decks"
+        ]
+      }
+    },
+    "/decks/{id}/users/{userId}": {
+      "delete": {
+        "description": "Removes a user from a deck. Requires admin permissions. Admins can remove any user.",
+        "operationId": "DeckController_removeUserFromDeck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the deck",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the user to remove",
+            "schema": {
+              "example": 2,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully removed user from deck"
+          },
+          "400": {
+            "description": "Cannot remove yourself using this endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions to remove users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck or user not found in deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Remove a user from a deck",
+        "tags": [
+          "Decks"
+        ]
+      }
+    },
+    "/decks/{id}/leave": {
+      "delete": {
+        "description": "Removes the authenticated user from the deck. If the user is the last admin, promotes another user to admin. If no users remain, deletes the deck.",
+        "operationId": "DeckController_leaveDeck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the deck to leave",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully left the deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveDeckResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User is not a member of the deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave a deck",
+        "tags": [
+          "Decks"
+        ]
+      }
+    },
+    "/cards/deck/{deckId}": {
+      "post": {
+        "description": "Creates a new flashcard in the specified deck. The authenticated user must have access to the deck to create cards.",
+        "operationId": "CardController_createCard",
+        "parameters": [
+          {
+            "name": "deckId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the deck to add the card to",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Card data to create",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCardDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Card successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or card creation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have access to the specified deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Create a new card in a deck",
+        "tags": [
+          "Cards"
+        ]
+      },
+      "get": {
+        "description": "Retrieves all flashcards from the specified deck. The authenticated user must have access to the deck.",
+        "operationId": "CardController_getCardsByDeck",
+        "parameters": [
+          {
+            "name": "deckId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the deck to get cards from",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cards successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CardResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have access to the specified deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get all cards from a deck",
+        "tags": [
+          "Cards"
+        ]
+      }
+    },
+    "/cards/{cardId}": {
+      "get": {
+        "description": "Retrieves a specific flashcard by its ID. The authenticated user must have access to the deck containing the card.",
+        "operationId": "CardController_getCardById",
+        "parameters": [
+          {
+            "name": "cardId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the card to retrieve",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Card successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have access to the deck containing this card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get a specific card by ID",
+        "tags": [
+          "Cards"
+        ]
+      },
+      "patch": {
+        "description": "Updates a specific flashcard by its ID. Only the creator of the card or deck admins can update cards. Fields that are not provided will remain unchanged. You can also move the card to a different deck by providing a deckId - you must have access to the target deck.",
+        "operationId": "CardController_updateCard",
+        "parameters": [
+          {
+            "name": "cardId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the card to update",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Card data to update (only provide fields you want to change)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCardDto"
+              },
+              "examples": {
+                "Update question only": {
+                  "value": {
+                    "question": "What is the capital city of France?"
+                  }
+                },
+                "Update answer and notes": {
+                  "value": {
+                    "answer": "Paris, the City of Light",
+                    "notes": "Paris is known for its cultural heritage and iconic landmarks."
+                  }
+                },
+                "Update all fields": {
+                  "value": {
+                    "question": "What is the capital and largest city of France?",
+                    "answer": "Paris",
+                    "notes": "Paris is located in northern central France and is the political, economic, and cultural center of the country."
+                  }
+                },
+                "Move card to different deck": {
+                  "value": {
+                    "deckId": 2
+                  }
+                },
+                "Update and move card": {
+                  "value": {
+                    "question": "What is the capital of France?",
+                    "answer": "Paris",
+                    "deckId": 3
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Card successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data, no fields to update, or card update failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to update this card or access to the target deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card not found or target deck not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Update a specific card",
+        "tags": [
+          "Cards"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a specific flashcard. Only the creator of the card or deck admins can delete cards.",
+        "operationId": "CardController_deleteCard",
+        "parameters": [
+          {
+            "name": "cardId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the card to delete",
+            "schema": {
+              "example": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Card successfully deleted"
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to delete this card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Delete a specific card",
+        "tags": [
+          "Cards"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Open Flashcards API",
+    "description": "Open Flashcards API",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "JWT-auth": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "JWT",
+        "description": "Enter JWT token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "user@example.com",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password (required for email authentication)",
+            "example": "securePassword123",
+            "minLength": 6
+          },
+          "name": {
+            "type": "string",
+            "description": "User display name",
+            "example": "John Doe"
+          },
+          "appleId": {
+            "type": "string",
+            "description": "Apple ID for Apple authentication",
+            "example": "apple_user_id_123"
+          },
+          "googleId": {
+            "type": "string",
+            "description": "Google ID for Google authentication",
+            "example": "google_user_id_123"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Authentication provider",
+            "example": "email",
+            "enum": [
+              "email",
+              "apple",
+              "google"
+            ],
+            "default": "email"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique user identifier",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "user@example.com",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "description": "User display name",
+            "example": "John Doe"
+          },
+          "appleId": {
+            "type": "string",
+            "description": "Apple ID for Apple authentication",
+            "example": "apple_user_id_123"
+          },
+          "googleId": {
+            "type": "string",
+            "description": "Google ID for Google authentication",
+            "example": "google_user_id_123"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Authentication provider used",
+            "example": "email",
+            "enum": [
+              "email",
+              "apple",
+              "google"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "User creation timestamp",
+            "example": "2025-07-04T21:00:00.000Z",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "User last update timestamp",
+            "example": "2025-07-04T21:00:00.000Z",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "provider",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ValidationErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "message": {
+            "type": "object",
+            "description": "Error message",
+            "example": "Validation failed"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Bad Request"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ]
+      },
+      "ConflictErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 409
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Resource already exists"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Conflict"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "user@example.com",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password",
+            "example": "password123",
+            "minLength": 6,
+            "format": "password"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Token type",
+            "example": "Bearer",
+            "enum": [
+              "Bearer"
+            ]
+          },
+          "expires_in": {
+            "type": "number",
+            "description": "Token expiration time in seconds",
+            "example": 604800
+          },
+          "user": {
+            "type": "object",
+            "description": "User information",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "User ID",
+                "example": "clm1234567890"
+              },
+              "email": {
+                "type": "string",
+                "description": "User email",
+                "example": "user@example.com"
+              },
+              "name": {
+                "type": "string",
+                "description": "User full name",
+                "example": "John Doe"
+              }
+            }
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "user"
+        ]
+      },
+      "AuthErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 401
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid credentials"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Unauthorized"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Timestamp of the error",
+            "example": "2025-07-05T10:30:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Request path",
+            "example": "/auth/login"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error",
+          "timestamp",
+          "path"
+        ]
+      },
+      "UserDeckResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique identifier of the user-deck relationship",
+            "example": 1
+          },
+          "userId": {
+            "type": "number",
+            "description": "User ID",
+            "example": 1
+          },
+          "deckId": {
+            "type": "number",
+            "description": "Deck ID",
+            "example": 1
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the user in the deck",
+            "example": "member",
+            "enum": [
+              "admin",
+              "member"
+            ]
+          },
+          "user": {
+            "type": "object",
+            "description": "User information",
+            "properties": {
+              "id": {
+                "type": "number",
+                "example": 1
+              },
+              "email": {
+                "type": "string",
+                "example": "user@example.com"
+              },
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "deckId",
+          "role"
+        ]
+      },
+      "DeckResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique identifier of the deck",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the deck",
+            "example": "Spanish Vocabulary"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the deck",
+            "example": "A comprehensive deck for learning basic Spanish vocabulary"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "Whether the deck is public or private",
+            "example": false
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2023-07-05T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update timestamp",
+            "example": "2023-07-05T10:30:00.000Z"
+          },
+          "parentDeckId": {
+            "type": "number",
+            "description": "ID of the parent deck if this is a subdeck",
+            "example": 1
+          },
+          "userDecks": {
+            "description": "User-deck relationships",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserDeckResponseDto"
+            }
+          },
+          "subDecks": {
+            "description": "Subdecks of this deck",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeckResponseDto"
+            }
+          },
+          "parentDeck": {
+            "description": "Parent deck information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeckResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isPublic",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UnauthorizedErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 401
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Unauthorized"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Unauthorized"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ]
+      },
+      "NotFoundErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Resource not found"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Not Found"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ]
+      },
+      "CreateDeckDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the deck",
+            "example": "Spanish Vocabulary",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the deck",
+            "example": "A comprehensive deck for learning basic Spanish vocabulary",
+            "maxLength": 1000
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "Whether the deck is public or private",
+            "example": false,
+            "default": false
+          },
+          "parentDeckId": {
+            "type": "number",
+            "description": "ID of the parent deck if this is a subdeck",
+            "example": 1
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ForbiddenErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 403
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Insufficient permissions to perform this action"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Forbidden"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ]
+      },
+      "AddUserToDeckDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address of the user to add to the deck",
+            "example": "user@example.com"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role to assign to the user in the deck",
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "example": "member",
+            "default": "member"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ]
+      },
+      "LeaveDeckResponseDto": {
+        "type": "object",
+        "properties": {
+          "deckDeleted": {
+            "type": "boolean",
+            "description": "Whether the deck was deleted after the user left",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing what happened",
+            "example": "Successfully left the deck"
+          },
+          "newAdminId": {
+            "type": "number",
+            "description": "ID of the new admin (if one was promoted)",
+            "example": 2
+          }
+        },
+        "required": [
+          "deckDeleted",
+          "message"
+        ]
+      },
+      "CreateCardDto": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The question text for the flashcard",
+            "example": "What is the capital of France?",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "answer": {
+            "type": "string",
+            "description": "The answer text for the flashcard",
+            "example": "Paris",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes or explanation for the card (optional)",
+            "example": "Paris is the largest city in France and has been the capital since 987 AD.",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ]
+      },
+      "CardResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique identifier for the card",
+            "example": 1
+          },
+          "question": {
+            "type": "string",
+            "description": "The question text for the flashcard",
+            "example": "What is the capital of France?"
+          },
+          "answer": {
+            "type": "string",
+            "description": "The answer text for the flashcard",
+            "example": "Paris"
+          },
+          "deckId": {
+            "type": "number",
+            "description": "ID of the deck this card belongs to",
+            "example": 5
+          },
+          "createdById": {
+            "type": "number",
+            "description": "ID of the user who created this card",
+            "example": 2,
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string",
+            "description": "Name of the user who created this card",
+            "example": "John Doe",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the card was created",
+            "example": "2024-07-05T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the card was last updated",
+            "example": "2024-07-05T10:30:00.000Z"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes or explanation for the card",
+            "example": "Paris is the largest city in France and has been the capital since 987 AD.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "question",
+          "answer",
+          "deckId",
+          "createdById",
+          "createdByName",
+          "createdAt",
+          "updatedAt",
+          "notes"
+        ]
+      },
+      "UpdateCardDto": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The question text for the flashcard",
+            "example": "What is the capital of France?",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "answer": {
+            "type": "string",
+            "description": "The answer text for the flashcard",
+            "example": "Paris",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes or explanation for the card (optional)",
+            "example": "Paris is the largest city in France and has been the capital since 987 AD.",
+            "maxLength": 1000
+          },
+          "deckId": {
+            "type": "integer",
+            "description": "The ID of the deck to move this card to (optional)",
+            "example": 2
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "JWT-auth": []
+    }
+  ]
+}
