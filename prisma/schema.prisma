@@ -25,6 +25,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   userDecks UserDeck[]
+  cards     Card[]     @relation("CardCreator")
 
   @@map("users")
 }
@@ -60,14 +61,16 @@ model UserDeck {
 }
 
 model Card {
-  id        Int      @id @default(autoincrement())
-  question  String   @db.Text
-  answer    String   @db.Text
-  deckId    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  question    String   @db.Text
+  answer      String   @db.Text
+  deckId      Int
+  createdById Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deck      Deck  @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("CardCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@map("cards")
 }
