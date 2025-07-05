@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { DeckModule } from './deck/deck.module';
+import { CardModule } from './card/card.module';
 import { JwtAuthGuard } from './auth/guards';
 
 @Module({
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from './auth/guards';
     UserModule, // User management module
     AuthModule, // Authentication module
     DeckModule, // Deck management module
+    CardModule, // Card management module
     // Add your feature modules here
   ],
   controllers: [AppController],
